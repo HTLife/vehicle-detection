@@ -197,6 +197,37 @@ def draw_results(img, image_lane, yolo, fps, lane_info):
 
     return img_cp
 
+def draw_results_(img, yolo, fps):
+    img_cp = img.copy()
+    results = yolo.result_list
+
+    # draw the highlighted background
+    # img_cp = draw_background_highlight(img_cp, image_lane, yolo.w_img)
+
+    window_list = []
+    for i in range(len(results)):
+        x = int(results[i][1])
+        y = int(results[i][2])
+        w = int(results[i][3])//2
+        h = int(results[i][4])//2
+        cv2.rectangle(img_cp,(x-w,y-h),(x+w,y+h),(0,0,255),4)
+        cv2.rectangle(img_cp,(x-w,y-h-20),(x+w,y-h),(125,125,125),-1)
+        # cv2.putText(img_cp,results[i][0] + ' : %.2f' % results[i][5],(x-w+5,y-h-7),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,0),1)
+        cv2.putText(img_cp,results[i][0],(x-w+5,y-h-7),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,0),1)
+        if results[i][0] == "car" or results[i][0] == "bus":
+            window_list.append(((x-w,y-h),(x+w,y+h)))
+
+    # draw vehicle thumbnails
+    #draw_thumbnails(img_cp, img, window_list)
+
+    # draw speed
+    # draw_speed(img_cp, fps, yolo.w_img)
+
+    # draw lane status
+    # draw_lane_status(img_cp,lane_info)
+
+    return img_cp    
+
 def iou(box1,box2):
     tb = min(box1[0]+0.5*box1[2],box2[0]+0.5*box2[2])-max(box1[0]-0.5*box1[2],box2[0]-0.5*box2[2])
     lr = min(box1[1]+0.5*box1[3],box2[1]+0.5*box2[3])-max(box1[1]-0.5*box1[3],box2[1]-0.5*box2[3])
@@ -219,3 +250,15 @@ def vehicle_detection_yolo(image, image_lane, lane_info):
     yolo_result = draw_results(image, image_lane, yolo, fps, lane_info)
 
     return yolo_result
+
+def vehicle_detection_yolo_(image):
+    # set the timer
+    start = timer()
+    detect_from_file(yolo, image)
+
+    # compute frame per second
+    fps = 1.0 / (timer() - start)
+    # draw visualization on frame
+    yolo_result = draw_results_(image, yolo, fps)
+
+    return yolo_result    
