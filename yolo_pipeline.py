@@ -6,9 +6,12 @@ from timeit import default_timer as timer
 # import matplotlib.pyplot as plt
 from visualizations import *
 
+W_IMG = 1280
+H_IMG = 720
+
 class yolo_tf:
-    w_img = 1280
-    h_img = 720
+    w_img = W_IMG
+    h_img = H_IMG
 
     weights_file = 'weights/YOLO_small.ckpt'
     alpha = 0.1
@@ -210,15 +213,28 @@ def draw_results_(img, yolo, fps):
         y = int(results[i][2])
         w = int(results[i][3])//2
         h = int(results[i][4])//2
+        # Filtering out large box
+
+        if w*2 > W_IMG * 0.7:
+            continue
+        
+
         cv2.rectangle(img_cp,(x-w,y-h),(x+w,y+h),(0,0,255),4)
         cv2.rectangle(img_cp,(x-w,y-h-20),(x+w,y-h),(125,125,125),-1)
         # cv2.putText(img_cp,results[i][0] + ' : %.2f' % results[i][5],(x-w+5,y-h-7),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,0),1)
         cv2.putText(img_cp,results[i][0],(x-w+5,y-h-7),cv2.FONT_HERSHEY_SIMPLEX,0.5,(255,255,0),1)
+
+        left = max(0, x-w)
+        top = max(0, y-h)
+        right = max(0, x+w)
+        bottom = max(0, y+h)
+
         if results[i][0] == "car" or results[i][0] == "bus":
-            window_list.append(((x-w,y-h),(x+w,y+h)))
+            window_list.append(((left, top),(right, bottom)))
 
     # draw vehicle thumbnails
-    #draw_thumbnails(img_cp, img, window_list)
+    #print(window_list)
+    draw_thumbnails(img_cp, img, window_list)
 
     # draw speed
     # draw_speed(img_cp, fps, yolo.w_img)
@@ -255,6 +271,8 @@ def vehicle_detection_yolo_(image):
     # set the timer
     start = timer()
     detect_from_file(yolo, image)
+
+
 
     # compute frame per second
     fps = 1.0 / (timer() - start)
